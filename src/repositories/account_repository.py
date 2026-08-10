@@ -17,6 +17,14 @@ class AccountRepository:
     def get_by_id(self, account_id: int):
         return self.db.query(Account).filter(Account.id == account_id).first()
 
+    def get_by_id_for_update(self, account_id: int):
+        return (
+            self.db.query(Account)
+            .filter(Account.id == account_id)
+            .with_for_update()
+            .first()
+        )
+
     def update(self, account: Account):
         self.db.add(account)
         self.db.commit()

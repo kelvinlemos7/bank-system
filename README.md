@@ -46,7 +46,7 @@ src/
 ├── models/           # Models SQLAlchemy
 ├── schemas/          # Schemas Pydantic
 ├── routes/           # Definição das rotas
-├── utils/            # Enums, erros e validações
+├── utils/            # Enums, erros, validações e handlers de exceção
 ├── database.py       # Conexão com o banco
 └── app.py            # Inicialização da aplicação
 ```
@@ -60,7 +60,7 @@ Route → Controller → Service → Repository → Database
 
 ## 🛠️ Tecnologias Utilizadas
 
-* **Python 3.11**
+* **Python 3.12**
 * **FastAPI**
 * **SQLAlchemy**
 * **Pydantic**
@@ -89,7 +89,16 @@ venv\Scripts\activate     # Windows
 pip install -r requirements.txt
 ```
 
-### 4️⃣ Rode a aplicação
+### 4️⃣ Configure o ambiente
+
+```bash
+cp .env.example .env
+```
+
+Ajuste a `DATABASE_URL` conforme seu ambiente (host `db` é usado dentro do Docker).
+
+### 5️⃣ Rode a aplicação
+
 ```bash
 uvicorn src.app:app --reload
 ```
@@ -98,12 +107,14 @@ ou
 $env:PYTHONPATH = "src"; uvicorn src.app:app --reload
 ```
 
-### 5️⃣ Acesse a documentação
+### 6️⃣ Acesse a documentação
+
 * Swagger UI: 👉 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 * OpenAPI JSON: 👉 [http://127.0.0.1:8000/openapi.json](http://127.0.0.1:8000/openapi.json)
 
 ## 🚀 Como rodar com Docker
 ```bash
+cp .env.example .env
 docker-compose up --build
 ```
 
@@ -140,8 +151,25 @@ Acesse: http://localhost:8000/docs
 
 * ❌ Saques e transferências não podem exceder o saldo
 * ❌ Transferências exigem conta de destino válida
+* ❌ Transferência para a própria conta não é permitida
 * ✅ Depósitos aumentam o saldo
 * ✅ Transferências debitam origem e creditam destino
+* ✅ Saldo inicial de conta não pode ser negativo
+
+---
+
+## ⚠️ Tratamento de erros
+
+Erros de negócio retornam códigos HTTP específicos em vez de `500`:
+
+| Erro                              | Código | Quando ocorre                          |
+| --------------------------------- | ------ | -------------------------------------- |
+| `DuplicateUserError`              | `409`  | Email já cadastrado                    |
+| `AccountNotFoundError`            | `404`  | Conta (ou destino) não encontrada      |
+| `UserNotFoundError`               | `404`  | Usuário não encontrado                 |
+| `InsufficientBalanceError`        | `400`  | Saldo insuficiente para saque/transferência |
+| `InvalidValueError`               | `422`  | Valor inválido (zero/negativo)         |
+| `InvalidEmailError` / `InvalidNameError` | `422` | Campos inválidos               |
 
 ---
 
@@ -220,7 +248,7 @@ Route → Controller → Service → Repository → Database
 
 ## 🛠️ Tech Stack
 
-* **Python 3.11**
+* **Python 3.12**
 * **FastAPI**
 * **SQLAlchemy**
 * **Pydantic**
@@ -249,7 +277,15 @@ venv\Scripts\activate     # Windows
 pip install -r requirements.txt
 ```
 
-### 4️⃣ Start the application
+### 4️⃣ Configure the environment
+
+```bash
+cp .env.example .env
+```
+
+Adjust the `DATABASE_URL` to your environment (host `db` is used inside Docker).
+
+### 5️⃣ Start the application
 ```bash
 uvicorn src.app:app --reload
 ```
@@ -258,12 +294,13 @@ or
 $env:PYTHONPATH = "src"; uvicorn src.app:app --reload
 ```
 
-### 5️⃣ Access the docs
+### 6️⃣ Access the docs
 * Swagger UI: 👉 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 * OpenAPI JSON: 👉 [http://127.0.0.1:8000/openapi.json](http://127.0.0.1:8000/openapi.json)
 
 ## 🚀 Running with Docker
 ```bash
+cp .env.example .env
 docker-compose up --build
 ```
 
@@ -300,8 +337,25 @@ Access: http://localhost:8000/docs
 
 * ❌ Withdrawals and transfers cannot exceed the available balance
 * ❌ Transfers require a valid destination account
+* ❌ Transfer to the same account is not allowed
 * ✅ Deposits increase the account balance
 * ✅ Transfers debit the source and credit the destination
+* ✅ Initial account balance cannot be negative
+
+---
+
+## ⚠️ Error Handling
+
+Business errors return specific HTTP codes instead of `500`:
+
+| Error                             | Code | When it happens                             |
+| --------------------------------- | ---- | ------------------------------------------- |
+| `DuplicateUserError`              | `409` | Email already registered                    |
+| `AccountNotFoundError`            | `404` | Account (or destination) not found          |
+| `UserNotFoundError`               | `404` | User not found                              |
+| `InsufficientBalanceError`        | `400` | Insufficient balance for withdrawal/transfer |
+| `InvalidValueError`               | `422` | Invalid amount (zero/negative)              |
+| `InvalidEmailError` / `InvalidNameError` | `422` | Invalid fields                    |
 
 ---
 

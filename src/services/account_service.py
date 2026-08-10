@@ -1,7 +1,8 @@
 from repositories.account_repository import AccountRepository
 from repositories.user_repository import UserRepository
 from models.account import Account
-from utils.errors import AccountNotFoundError
+from utils.errors import UserNotFoundError
+from utils.validators import validate_non_negative_value
 
 class AccountService:
     def __init__(
@@ -16,7 +17,9 @@ class AccountService:
 
         user = self.user_repository.get_by_id(user_id)
         if not user:
-            raise AccountNotFoundError("Usuário não encontrado")
+            raise UserNotFoundError("Usuário não encontrado")
+
+        validate_non_negative_value(balance)
 
         account = Account(
             user_id=user_id,

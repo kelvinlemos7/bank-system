@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, ForeignKey
+from sqlalchemy import Column, Integer, Numeric, ForeignKey
 from database import Base
 
 class Account(Base):
@@ -6,4 +6,4 @@ class Account(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    balance = Column(Float, default=0.0)
+    balance = Column(Numeric(10, 2), default=0.0)

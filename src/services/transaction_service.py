@@ -1,9 +1,10 @@
+from decimal import Decimal
 from sqlalchemy.orm import Session
 from repositories.transaction_repository import TransactionRepository
 from repositories.account_repository import AccountRepository
 from models.transaction import Transaction
 from utils.validators import validate_positive_value
-from utils.errors import AccountNotFoundError, InsufficientBalanceError
+from utils.errors import AccountNotFoundError, InsufficientBalanceError, BusinessError
 from utils.enum import TransactionType
 
 
@@ -26,41 +27,44 @@ class TransactionService:
         destination_account_id: int | None = None
     ):
         try:
-            account = self.account_repository.get_by_id(account_id)
+            validate_positive_value(amount)
+            amount_decimal = Decimal(str(amount))
+
+            account = self.account_repository.get_by_id_for_update(account_id)
             if not account:
                 raise AccountNotFoundError("Conta não encontrada")
-
-            validate_positive_value(amount)
-
-            if transaction_type in [TransactionType.WITHDRAW, TransactionType.TRANSFER]:
-                if account.balance < amount:
-                    raise InsufficientBalanceError("Saldo insuficiente")
 
             destination = None
             if transaction_type == TransactionType.TRANSFER:
                 if not destination_account_id:
                     raise AccountNotFoundError("Conta de destino obrigatória")
+                if destination_account_id == account_id:
+                    raise BusinessError("Transferência para a própria conta não permitida")
 
-                destination = self.account_repository.get_by_id(destination_account_id)
+                destination = self.account_repository.get_by_id_for_update(destination_account_id)
                 if not destination:
                     raise AccountNotFoundError("Conta de destino não encontrada")
 
+            if transaction_type in [TransactionType.WITHDRAW, TransactionType.TRANSFER]:
+                if account.balance < amount_decimal:
+                    raise InsufficientBalanceError("Saldo insuficiente")
+
             if transaction_type == TransactionType.DEPOSIT:
-                account.balance += amount
+                account.balance += amount_decimal
 
             elif transaction_type == TransactionType.WITHDRAW:
-                account.balance -= amount
+                account.balance -= amount_decimal
 
             elif transaction_type == TransactionType.TRANSFER:
-                account.balance -= amount
-                destination.balance += amount
+                account.balance -= amount_decimal
+                destination.balance += amount_decimal
                 self.db.add(destination)
 
             self.db.add(account)
 
             transaction = Transaction(
                 account_id=account.id,
-                amount=amount,
+                amount=amount_decimal,
                 transaction_type=transaction_type.value,
                 destination_account_id=destination.id if destination else None
             )

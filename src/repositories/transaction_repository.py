@@ -1,3 +1,4 @@
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from models.transaction import Transaction
 
@@ -18,7 +19,12 @@ class TransactionRepository:
          return (
             self.db
             .query(Transaction)
-            .filter(Transaction.account_id == account_id)
+            .filter(
+                or_(
+                    Transaction.account_id == account_id,
+                    Transaction.destination_account_id == account_id,
+                )
+            )
             .all()
         )
     

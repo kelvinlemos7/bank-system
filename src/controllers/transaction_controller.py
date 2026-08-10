@@ -11,5 +11,6 @@ class TransactionController:
             transaction_type,
             destination_account_id
         )
-    
-    
+
+    def get_transactions(self, account_id):
+        return self.service.get_transactions(account_id)
